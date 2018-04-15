@@ -38,20 +38,20 @@ TEST(RingBufferTest, TestBufferLength)
     unsigned int size = 0;
     EXPECT_EQ(size, ringbuffer_length(&rb));
 
-    ringbuffer_push(&rb, 1);
+    ringbuffer_put(&rb, 1);
     ++size;
     EXPECT_EQ(size, ringbuffer_length(&rb));
 
-    ringbuffer_push(&rb, 'a');
+    ringbuffer_put(&rb, 'a');
     ++size;
     EXPECT_EQ(size, ringbuffer_length(&rb));
 
     char ch;
-    ringbuffer_pop(&rb, &ch);
+    ringbuffer_get(&rb, &ch);
     --size;
     EXPECT_EQ(size, ringbuffer_length(&rb));
 
-    ringbuffer_pop(&rb, &ch);
+    ringbuffer_get(&rb, &ch);
     --size;
     EXPECT_EQ(size, ringbuffer_length(&rb));
 }
@@ -66,12 +66,12 @@ TEST(RingBufferTest, TestBufferInputNotExceedsPushMaxPopMax)
 
     for (int i = 0; i < sizeof(buffer); i++) {
         data = 0xAA + i;
-        ringbuffer_push(&rb, data);
+        ringbuffer_put(&rb, data);
         EXPECT_EQ(i + 1, ringbuffer_length(&rb));
     }
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        ringbuffer_pop(&rb, &data);
+        ringbuffer_get(&rb, &data);
         EXPECT_EQ((char)(0xAA + i), data);
         EXPECT_EQ(sizeof(buffer) - i - 1, ringbuffer_length(&rb));
     }
@@ -83,20 +83,20 @@ TEST(RingBufferTest, TestBufferInputNotExceedsPush2Pop1)
     char buffer[1024];
     ringbuffer_init(&rb, buffer, sizeof(buffer));
 
-    const int num_of_elem_push = (2 * sizeof(buffer)) - 2;
-    char push_data = 0;
-    char pop_data = 0;
+    const int num_of_elem_put = (2 * sizeof(buffer)) - 2;
+    char put_data = 0;
+    char get_data = 0;
 
-    for (int i = 0; i < num_of_elem_push; i += 2) {
-        push_data = 0xAA + i;
-        ringbuffer_push(&rb, push_data);
-        push_data++;
-        ringbuffer_push(&rb, push_data);
+    for (int i = 0; i < num_of_elem_put; i += 2) {
+        put_data = 0xAA + i;
+        ringbuffer_put(&rb, put_data);
+        put_data++;
+        ringbuffer_put(&rb, put_data);
 
         EXPECT_EQ(i / 2 + 2, ringbuffer_length(&rb));
 
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &pop_data));
-        EXPECT_EQ((char)(0xAA + i / 2), pop_data);
+        EXPECT_EQ(0, ringbuffer_get(&rb, &get_data));
+        EXPECT_EQ((char)(0xAA + i / 2), get_data);
         EXPECT_EQ(i / 2 + 1, ringbuffer_length(&rb));
     }
 
@@ -108,12 +108,12 @@ TEST(RingBufferTest, TestBufferInputExceedsPushMaxPlus1PopMax)
     char buffer[1024];
     ringbuffer_init(&rb, buffer, sizeof(buffer));
 
-    const int num_of_elem_push = sizeof(buffer) + 1;
+    const int num_of_elem_put = sizeof(buffer) + 1;
     char data;
 
-    for (int i = 0; i < num_of_elem_push; i++) {
+    for (int i = 0; i < num_of_elem_put; i++) {
         data = 0xAA + i;
-        ringbuffer_push(&rb, data);
+        ringbuffer_put(&rb, data);
         if (i < sizeof(buffer)) {
             EXPECT_EQ(i + 1, ringbuffer_length(&rb));
         } else {
@@ -122,13 +122,13 @@ TEST(RingBufferTest, TestBufferInputExceedsPushMaxPlus1PopMax)
     }
 
     for (int i = 0; i < (sizeof(buffer) - 1); i++) {
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &data));
+        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
         EXPECT_EQ((char)(0xAA + i + 1), data);
         EXPECT_EQ(sizeof(buffer) - i - 1, ringbuffer_length(&rb));
     }
 
-    EXPECT_EQ(0, ringbuffer_pop(&rb, &data));
-    EXPECT_EQ((char)(0xAA + num_of_elem_push - 1), data);
+    EXPECT_EQ(0, ringbuffer_get(&rb, &data));
+    EXPECT_EQ((char)(0xAA + num_of_elem_put - 1), data);
     EXPECT_EQ(0, ringbuffer_length(&rb));
 }
 
@@ -138,15 +138,15 @@ TEST(RingBufferTest, TestBufferInputExceeds)
     char buffer[64];
     ringbuffer_init(&rb, buffer, sizeof(buffer));
 
-    int num_of_elem_push = 2 * sizeof(buffer);
-    char push_data = 0;
-    char pop_data = 0;
+    int num_of_elem_put = 2 * sizeof(buffer);
+    char put_data = 0;
+    char get_data = 0;
 
-    for (int i = 0; i < num_of_elem_push; i += 2) {
-        push_data = 0xAA + i;
-        ringbuffer_push(&rb, push_data);
-        push_data++;
-        ringbuffer_push(&rb, push_data);
+    for (int i = 0; i < num_of_elem_put; i += 2) {
+        put_data = 0xAA + i;
+        ringbuffer_put(&rb, put_data);
+        put_data++;
+        ringbuffer_put(&rb, put_data);
 
         if ((i / 2 + 1) < sizeof(buffer)) {
             EXPECT_EQ(i / 2 + 2, ringbuffer_length(&rb));
@@ -154,23 +154,23 @@ TEST(RingBufferTest, TestBufferInputExceeds)
             EXPECT_EQ(sizeof(buffer), ringbuffer_length(&rb));
         }
 
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &pop_data));
+        EXPECT_EQ(0, ringbuffer_get(&rb, &get_data));
         if ((i / 2 + 1) < sizeof(buffer)) {
             EXPECT_EQ(i / 2 + 1, ringbuffer_length(&rb));
         } else {
             EXPECT_EQ(sizeof(buffer) - 1, ringbuffer_length(&rb));
         }
 
-        if (i == (num_of_elem_push - 2)) {
-            EXPECT_EQ((char)(0xAA + i / 2 + 1), pop_data);
+        if (i == (num_of_elem_put - 2)) {
+            EXPECT_EQ((char)(0xAA + i / 2 + 1), get_data);
         } else {
-            EXPECT_EQ((char)(0xAA + i / 2), pop_data);
+            EXPECT_EQ((char)(0xAA + i / 2), get_data);
         }
     }
 
-    for (int i = 0; i < (num_of_elem_push / 2 - 1); i++) {
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &pop_data));
-        EXPECT_EQ((char)(0xAA + num_of_elem_push / 2 + i + 1), pop_data);
+    for (int i = 0; i < (num_of_elem_put / 2 - 1); i++) {
+        EXPECT_EQ(0, ringbuffer_get(&rb, &get_data));
+        EXPECT_EQ((char)(0xAA + num_of_elem_put / 2 + i + 1), get_data);
     }
 }
 
@@ -183,7 +183,7 @@ TEST(RingBufferTest, TestBufferPopEmptyFullSizeAfterCreation)
     char data;
 
     EXPECT_TRUE(ringbuffer_is_empty(&rb));
-    EXPECT_NE(0, ringbuffer_pop(&rb, &data));
+    EXPECT_NE(0, ringbuffer_get(&rb, &data));
     EXPECT_NE(0, ringbuffer_peek(&rb, &data));
     EXPECT_FALSE(ringbuffer_is_full(&rb));
     EXPECT_EQ(0, ringbuffer_length(&rb));
@@ -198,19 +198,19 @@ TEST(RingBufferTest, TestBufferEmpty)
     char data = 0;
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_push(&rb, data));
+        EXPECT_EQ(0, ringbuffer_put(&rb, data));
         EXPECT_FALSE(ringbuffer_is_empty(&rb));
     }
 
     for (int i = 0; i < sizeof(buffer) - 1; i++) {
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &data));
+        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
         EXPECT_FALSE(ringbuffer_is_empty(&rb));
     }
 
-    EXPECT_EQ(0, ringbuffer_pop(&rb, &data));
+    EXPECT_EQ(0, ringbuffer_get(&rb, &data));
     EXPECT_TRUE(ringbuffer_is_empty(&rb));
 
-    EXPECT_EQ(0, ringbuffer_push(&rb, data));
+    EXPECT_EQ(0, ringbuffer_put(&rb, data));
     EXPECT_FALSE(ringbuffer_is_empty(&rb));
 }
 
@@ -222,20 +222,20 @@ TEST(RingBufferTest, TestBufferFull)
     char data;
 
     for (int i = 0; i < (sizeof(buffer) - 1); i++) {
-        EXPECT_EQ(0, ringbuffer_push(&rb, data));
+        EXPECT_EQ(0, ringbuffer_put(&rb, data));
         EXPECT_FALSE(ringbuffer_is_full(&rb));
     }
 
-    ringbuffer_push(&rb, data);
+    ringbuffer_put(&rb, data);
     EXPECT_TRUE(ringbuffer_is_full(&rb));
 
     for (int i = 0; i < (sizeof(buffer) * 2); i++) {
-        ringbuffer_push(&rb, data);
+        ringbuffer_put(&rb, data);
         EXPECT_TRUE(ringbuffer_is_full(&rb));
     }
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &data));
+        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
         EXPECT_FALSE(ringbuffer_is_full(&rb));
     }
 }
@@ -249,7 +249,7 @@ TEST(RingBufferTest, TestBufferReset)
     char data = 0xAA;
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_push(&rb, data));
+        EXPECT_EQ(0, ringbuffer_put(&rb, data));
     }
 
     EXPECT_TRUE(ringbuffer_is_full(&rb));
@@ -258,16 +258,16 @@ TEST(RingBufferTest, TestBufferReset)
     ringbuffer_reset(&rb);
     EXPECT_FALSE(ringbuffer_is_full(&rb));
     EXPECT_TRUE(ringbuffer_is_empty(&rb));
-    EXPECT_NE(0, ringbuffer_pop(&rb, &data));
+    EXPECT_NE(0, ringbuffer_get(&rb, &data));
     EXPECT_EQ(0, ringbuffer_length(&rb));
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_push(&rb, data));
+        EXPECT_EQ(0, ringbuffer_put(&rb, data));
         data++;
     }
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &data));
+        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
         EXPECT_EQ((char)(0xAA + i), data);
     }
 }
@@ -283,7 +283,7 @@ TEST(RingBufferTest, TestBufferPeekNoPop)
 
     for (int i = 0; i < 3; i++) {
         data = value + i;
-        ringbuffer_push(&rb, data);
+        ringbuffer_put(&rb, data);
         ringbuffer_peek(&rb, &peek_data);
         EXPECT_EQ(i + 1, ringbuffer_length(&rb));
     }
@@ -291,7 +291,7 @@ TEST(RingBufferTest, TestBufferPeekNoPop)
     for (int i = 0; i < 1; i++) {
         EXPECT_EQ(0, ringbuffer_peek(&rb, &peek_data));
         EXPECT_EQ(value + i, peek_data);
-        EXPECT_EQ(0, ringbuffer_pop(&rb, &data));
+        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
         EXPECT_EQ(value + i, data);
         EXPECT_EQ(3 - i - 1, ringbuffer_length(&rb));
     }

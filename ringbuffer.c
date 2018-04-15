@@ -17,7 +17,7 @@ int ringbuffer_init(ringbuffer *ringbuf, char *buf, unsigned int buf_size)
     return -1;
 }
 
-int ringbuffer_push(ringbuffer *ringbuf, char ch)
+int ringbuffer_put(ringbuffer *ringbuf, char ch)
 {
     // overwrites the buffer if it's full
     if (ringbuffer_is_full(ringbuf)) {
@@ -29,7 +29,7 @@ int ringbuffer_push(ringbuffer *ringbuf, char ch)
     return 0;
 }
 
-int ringbuffer_pop(ringbuffer *ringbuf, char *r_val)
+int ringbuffer_get(ringbuffer *ringbuf, char *r_val)
 {
     if (!ringbuffer_is_empty(ringbuf)) {
         unsigned int pos = ringbuf->read_pos & (ringbuf->buf_size - 1);

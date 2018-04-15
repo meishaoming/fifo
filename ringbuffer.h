@@ -14,9 +14,9 @@ typedef struct ringbuffer {
 
 int ringbuffer_init(ringbuffer *ringbuf, char *buf, unsigned int buf_size);
 
-int ringbuffer_push(ringbuffer *ringbuf, char ch);
+int ringbuffer_put(ringbuffer *ringbuf, char ch);
 
-int ringbuffer_pop(ringbuffer *ringbuf, char *r_val);
+int ringbuffer_get(ringbuffer *ringbuf, char *r_val);
 
 int ringbuffer_peek(ringbuffer *ringbuf, char *r_val);
 
