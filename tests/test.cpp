@@ -1,87 +1,87 @@
 #include <gtest/gtest.h>
 
-#include "ringbuffer.h"
+#include "fifo.h"
 
-TEST(RingBufferTest, TestBufferInit)
+TEST(FifoTest, TestBufferInit)
 {
     char buf[1024];
 
-    ringbuffer rb;
-    EXPECT_NE(0, ringbuffer_init(&rb, NULL, 0));
-    EXPECT_NE(0, ringbuffer_init(&rb, NULL, 1));
+    fifo_t fifo;
+    EXPECT_NE(0, fifo_init(&fifo, NULL, 0));
+    EXPECT_NE(0, fifo_init(&fifo, NULL, 1));
 
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 1));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 2));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 4));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 8));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 16));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 32));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 64));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 128));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 256));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 512));
-    EXPECT_EQ(0, ringbuffer_init(&rb, buf, 1024));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 1));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 2));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 4));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 8));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 16));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 32));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 64));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 128));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 256));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 512));
+    EXPECT_EQ(0, fifo_init(&fifo, buf, 1024));
 
-    EXPECT_NE(0, ringbuffer_init(&rb, buf, 3));
-    EXPECT_NE(0, ringbuffer_init(&rb, buf, 5));
-    EXPECT_NE(0, ringbuffer_init(&rb, buf, 48));
-    EXPECT_NE(0, ringbuffer_init(&rb, buf, 96));
-    EXPECT_NE(0, ringbuffer_init(&rb, buf, 1023));
+    EXPECT_NE(0, fifo_init(&fifo, buf, 3));
+    EXPECT_NE(0, fifo_init(&fifo, buf, 5));
+    EXPECT_NE(0, fifo_init(&fifo, buf, 48));
+    EXPECT_NE(0, fifo_init(&fifo, buf, 96));
+    EXPECT_NE(0, fifo_init(&fifo, buf, 1023));
 }
 
-TEST(RingBufferTest, TestBufferLength)
+TEST(FifoTest, TestBufferLength)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[1024];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     unsigned int size = 0;
-    EXPECT_EQ(size, ringbuffer_length(&rb));
+    EXPECT_EQ(size, fifo_length(&fifo));
 
-    ringbuffer_put(&rb, 1);
+    fifo_push(&fifo, 1);
     ++size;
-    EXPECT_EQ(size, ringbuffer_length(&rb));
+    EXPECT_EQ(size, fifo_length(&fifo));
 
-    ringbuffer_put(&rb, 'a');
+    fifo_push(&fifo, 'a');
     ++size;
-    EXPECT_EQ(size, ringbuffer_length(&rb));
+    EXPECT_EQ(size, fifo_length(&fifo));
 
     char ch;
-    ringbuffer_get(&rb, &ch);
+    fifo_pop(&fifo, &ch);
     --size;
-    EXPECT_EQ(size, ringbuffer_length(&rb));
+    EXPECT_EQ(size, fifo_length(&fifo));
 
-    ringbuffer_get(&rb, &ch);
+    fifo_pop(&fifo, &ch);
     --size;
-    EXPECT_EQ(size, ringbuffer_length(&rb));
+    EXPECT_EQ(size, fifo_length(&fifo));
 }
 
-TEST(RingBufferTest, TestBufferInputNotExceedsPushMaxPopMax)
+TEST(FifoTest, TestBufferInputNotExceedsPushMaxPopMax)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[1024];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     char data = 0;
 
     for (int i = 0; i < sizeof(buffer); i++) {
         data = 0xAA + i;
-        ringbuffer_put(&rb, data);
-        EXPECT_EQ(i + 1, ringbuffer_length(&rb));
+        fifo_push(&fifo, data);
+        EXPECT_EQ(i + 1, fifo_length(&fifo));
     }
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        ringbuffer_get(&rb, &data);
+        fifo_pop(&fifo, &data);
         EXPECT_EQ((char)(0xAA + i), data);
-        EXPECT_EQ(sizeof(buffer) - i - 1, ringbuffer_length(&rb));
+        EXPECT_EQ(sizeof(buffer) - i - 1, fifo_length(&fifo));
     }
 }
 
-TEST(RingBufferTest, TestBufferInputNotExceedsPush2Pop1)
+TEST(FifoTest, TestBufferInputNotExceedsPush2Pop1)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[1024];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     const int num_of_elem_put = (2 * sizeof(buffer)) - 2;
     char put_data = 0;
@@ -89,54 +89,54 @@ TEST(RingBufferTest, TestBufferInputNotExceedsPush2Pop1)
 
     for (int i = 0; i < num_of_elem_put; i += 2) {
         put_data = 0xAA + i;
-        ringbuffer_put(&rb, put_data);
+        fifo_push(&fifo, put_data);
         put_data++;
-        ringbuffer_put(&rb, put_data);
+        fifo_push(&fifo, put_data);
 
-        EXPECT_EQ(i / 2 + 2, ringbuffer_length(&rb));
+        EXPECT_EQ(i / 2 + 2, fifo_length(&fifo));
 
-        EXPECT_EQ(0, ringbuffer_get(&rb, &get_data));
+        EXPECT_EQ(0, fifo_pop(&fifo, &get_data));
         EXPECT_EQ((char)(0xAA + i / 2), get_data);
-        EXPECT_EQ(i / 2 + 1, ringbuffer_length(&rb));
+        EXPECT_EQ(i / 2 + 1, fifo_length(&fifo));
     }
 
 }
 
-TEST(RingBufferTest, TestBufferInputExceedsPushMaxPlus1PopMax)
+TEST(FifoTest, TestBufferInputExceedsPushMaxPlus1PopMax)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[1024];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     const int num_of_elem_put = sizeof(buffer) + 1;
     char data;
 
     for (int i = 0; i < num_of_elem_put; i++) {
         data = 0xAA + i;
-        ringbuffer_put(&rb, data);
+        fifo_push(&fifo, data);
         if (i < sizeof(buffer)) {
-            EXPECT_EQ(i + 1, ringbuffer_length(&rb));
+            EXPECT_EQ(i + 1, fifo_length(&fifo));
         } else {
-            EXPECT_EQ(sizeof(buffer), ringbuffer_length(&rb));
+            EXPECT_EQ(sizeof(buffer), fifo_length(&fifo));
         }
     }
 
     for (int i = 0; i < (sizeof(buffer) - 1); i++) {
-        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
+        EXPECT_EQ(0, fifo_pop(&fifo, &data));
         EXPECT_EQ((char)(0xAA + i + 1), data);
-        EXPECT_EQ(sizeof(buffer) - i - 1, ringbuffer_length(&rb));
+        EXPECT_EQ(sizeof(buffer) - i - 1, fifo_length(&fifo));
     }
 
-    EXPECT_EQ(0, ringbuffer_get(&rb, &data));
+    EXPECT_EQ(0, fifo_pop(&fifo, &data));
     EXPECT_EQ((char)(0xAA + num_of_elem_put - 1), data);
-    EXPECT_EQ(0, ringbuffer_length(&rb));
+    EXPECT_EQ(0, fifo_length(&fifo));
 }
 
-TEST(RingBufferTest, TestBufferInputExceeds)
+TEST(FifoTest, TestBufferInputExceeds)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[64];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     int num_of_elem_put = 2 * sizeof(buffer);
     char put_data = 0;
@@ -144,21 +144,21 @@ TEST(RingBufferTest, TestBufferInputExceeds)
 
     for (int i = 0; i < num_of_elem_put; i += 2) {
         put_data = 0xAA + i;
-        ringbuffer_put(&rb, put_data);
+        fifo_push(&fifo, put_data);
         put_data++;
-        ringbuffer_put(&rb, put_data);
+        fifo_push(&fifo, put_data);
 
         if ((i / 2 + 1) < sizeof(buffer)) {
-            EXPECT_EQ(i / 2 + 2, ringbuffer_length(&rb));
+            EXPECT_EQ(i / 2 + 2, fifo_length(&fifo));
         } else {
-            EXPECT_EQ(sizeof(buffer), ringbuffer_length(&rb));
+            EXPECT_EQ(sizeof(buffer), fifo_length(&fifo));
         }
 
-        EXPECT_EQ(0, ringbuffer_get(&rb, &get_data));
+        EXPECT_EQ(0, fifo_pop(&fifo, &get_data));
         if ((i / 2 + 1) < sizeof(buffer)) {
-            EXPECT_EQ(i / 2 + 1, ringbuffer_length(&rb));
+            EXPECT_EQ(i / 2 + 1, fifo_length(&fifo));
         } else {
-            EXPECT_EQ(sizeof(buffer) - 1, ringbuffer_length(&rb));
+            EXPECT_EQ(sizeof(buffer) - 1, fifo_length(&fifo));
         }
 
         if (i == (num_of_elem_put - 2)) {
@@ -169,131 +169,131 @@ TEST(RingBufferTest, TestBufferInputExceeds)
     }
 
     for (int i = 0; i < (num_of_elem_put / 2 - 1); i++) {
-        EXPECT_EQ(0, ringbuffer_get(&rb, &get_data));
+        EXPECT_EQ(0, fifo_pop(&fifo, &get_data));
         EXPECT_EQ((char)(0xAA + num_of_elem_put / 2 + i + 1), get_data);
     }
 }
 
-TEST(RingBufferTest, TestBufferPopEmptyFullSizeAfterCreation)
+TEST(FifoTest, TestBufferPopEmptyFullSizeAfterCreation)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[1];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     char data;
 
-    EXPECT_TRUE(ringbuffer_is_empty(&rb));
-    EXPECT_NE(0, ringbuffer_get(&rb, &data));
-    EXPECT_NE(0, ringbuffer_peek(&rb, &data));
-    EXPECT_FALSE(ringbuffer_is_full(&rb));
-    EXPECT_EQ(0, ringbuffer_length(&rb));
+    EXPECT_TRUE(fifo_is_empty(&fifo));
+    EXPECT_NE(0, fifo_pop(&fifo, &data));
+    EXPECT_NE(0, fifo_peek(&fifo, &data));
+    EXPECT_FALSE(fifo_is_full(&fifo));
+    EXPECT_EQ(0, fifo_length(&fifo));
 }
 
-TEST(RingBufferTest, TestBufferEmpty)
+TEST(FifoTest, TestBufferEmpty)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[128];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     char data = 0;
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_put(&rb, data));
-        EXPECT_FALSE(ringbuffer_is_empty(&rb));
+        EXPECT_EQ(0, fifo_push(&fifo, data));
+        EXPECT_FALSE(fifo_is_empty(&fifo));
     }
 
     for (int i = 0; i < sizeof(buffer) - 1; i++) {
-        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
-        EXPECT_FALSE(ringbuffer_is_empty(&rb));
+        EXPECT_EQ(0, fifo_pop(&fifo, &data));
+        EXPECT_FALSE(fifo_is_empty(&fifo));
     }
 
-    EXPECT_EQ(0, ringbuffer_get(&rb, &data));
-    EXPECT_TRUE(ringbuffer_is_empty(&rb));
+    EXPECT_EQ(0, fifo_pop(&fifo, &data));
+    EXPECT_TRUE(fifo_is_empty(&fifo));
 
-    EXPECT_EQ(0, ringbuffer_put(&rb, data));
-    EXPECT_FALSE(ringbuffer_is_empty(&rb));
+    EXPECT_EQ(0, fifo_push(&fifo, data));
+    EXPECT_FALSE(fifo_is_empty(&fifo));
 }
 
-TEST(RingBufferTest, TestBufferFull)
+TEST(FifoTest, TestBufferFull)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[256];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
     char data;
 
     for (int i = 0; i < (sizeof(buffer) - 1); i++) {
-        EXPECT_EQ(0, ringbuffer_put(&rb, data));
-        EXPECT_FALSE(ringbuffer_is_full(&rb));
+        EXPECT_EQ(0, fifo_push(&fifo, data));
+        EXPECT_FALSE(fifo_is_full(&fifo));
     }
 
-    ringbuffer_put(&rb, data);
-    EXPECT_TRUE(ringbuffer_is_full(&rb));
+    fifo_push(&fifo, data);
+    EXPECT_TRUE(fifo_is_full(&fifo));
 
     for (int i = 0; i < (sizeof(buffer) * 2); i++) {
-        ringbuffer_put(&rb, data);
-        EXPECT_TRUE(ringbuffer_is_full(&rb));
+        fifo_push(&fifo, data);
+        EXPECT_TRUE(fifo_is_full(&fifo));
     }
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
-        EXPECT_FALSE(ringbuffer_is_full(&rb));
+        EXPECT_EQ(0, fifo_pop(&fifo, &data));
+        EXPECT_FALSE(fifo_is_full(&fifo));
     }
 }
 
-TEST(RingBufferTest, TestBufferReset)
+TEST(FifoTest, TestBufferReset)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[512];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
 
     char data = 0xAA;
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_put(&rb, data));
+        EXPECT_EQ(0, fifo_push(&fifo, data));
     }
 
-    EXPECT_TRUE(ringbuffer_is_full(&rb));
-    EXPECT_FALSE(ringbuffer_is_empty(&rb));
+    EXPECT_TRUE(fifo_is_full(&fifo));
+    EXPECT_FALSE(fifo_is_empty(&fifo));
 
-    ringbuffer_reset(&rb);
-    EXPECT_FALSE(ringbuffer_is_full(&rb));
-    EXPECT_TRUE(ringbuffer_is_empty(&rb));
-    EXPECT_NE(0, ringbuffer_get(&rb, &data));
-    EXPECT_EQ(0, ringbuffer_length(&rb));
+    fifo_reset(&fifo);
+    EXPECT_FALSE(fifo_is_full(&fifo));
+    EXPECT_TRUE(fifo_is_empty(&fifo));
+    EXPECT_NE(0, fifo_pop(&fifo, &data));
+    EXPECT_EQ(0, fifo_length(&fifo));
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_put(&rb, data));
+        EXPECT_EQ(0, fifo_push(&fifo, data));
         data++;
     }
 
     for (int i = 0; i < sizeof(buffer); i++) {
-        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
+        EXPECT_EQ(0, fifo_pop(&fifo, &data));
         EXPECT_EQ((char)(0xAA + i), data);
     }
 }
 
-TEST(RingBufferTest, TestBufferPeekNoPop)
+TEST(FifoTest, TestBufferPeekNoPop)
 {
-    ringbuffer rb;
+    fifo_t fifo;
     char buffer[256];
-    ringbuffer_init(&rb, buffer, sizeof(buffer));
+    fifo_init(&fifo, buffer, sizeof(buffer));
     char data = 0;
     char peek_data = 0;
     char value = 0xAA;
 
     for (int i = 0; i < 3; i++) {
         data = value + i;
-        ringbuffer_put(&rb, data);
-        ringbuffer_peek(&rb, &peek_data);
-        EXPECT_EQ(i + 1, ringbuffer_length(&rb));
+        fifo_push(&fifo, data);
+        fifo_peek(&fifo, &peek_data);
+        EXPECT_EQ(i + 1, fifo_length(&fifo));
     }
 
     for (int i = 0; i < 1; i++) {
-        EXPECT_EQ(0, ringbuffer_peek(&rb, &peek_data));
+        EXPECT_EQ(0, fifo_peek(&fifo, &peek_data));
         EXPECT_EQ(value + i, peek_data);
-        EXPECT_EQ(0, ringbuffer_get(&rb, &data));
+        EXPECT_EQ(0, fifo_pop(&fifo, &data));
         EXPECT_EQ(value + i, data);
-        EXPECT_EQ(3 - i - 1, ringbuffer_length(&rb));
+        EXPECT_EQ(3 - i - 1, fifo_length(&fifo));
     }
 }
 
