@@ -1,12 +1,14 @@
 #ifndef _USER_FIFO_H_
 #define _USER_FIFO_H_
 
-typedef struct {
+struct fifo_t {
     unsigned int read_pos;
     unsigned int write_pos;
     char *buf;
     unsigned int buf_size;
-} fifo_t;
+};
+
+typedef struct fifo_t fifo_t;
 
 #define _FIFO_INITIALIZER(obj, buffer, buffer_size) \
 { \
@@ -18,7 +20,7 @@ typedef struct {
 
 #define STATIC_FIFO_DEFINE(name, size) \
     static char _buffer_##name[size]; \
-    static struct fifo_t name = \
+    static fifo_t name = \
     _FIFO_INITIALIZER(name, _buffer_##name, size)
 
 #ifdef __cplusplus

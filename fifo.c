@@ -19,9 +19,8 @@ int fifo_init(fifo_t *fifo, char *buf, unsigned int buf_size)
 
 int fifo_push(fifo_t *fifo, char c)
 {
-    // overwrites the buffer if it's full
     if (fifo_is_full(fifo)) {
-        fifo->read_pos++;
+        return -1;
     }
     unsigned int pos = fifo->write_pos & (fifo->buf_size - 1);
     fifo->buf[pos] = c;
