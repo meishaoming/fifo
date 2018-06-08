@@ -1,49 +1,41 @@
 #ifndef _USER_FIFO_H_
 #define _USER_FIFO_H_
 
-struct fifo_t {
+struct __fifo {
     unsigned int read_pos;
     unsigned int write_pos;
+    unsigned int mask;
     char *buf;
-    unsigned int buf_size;
 };
 
-typedef struct fifo_t fifo_t;
+typedef struct __fifo fifo_t;
 
-#define _FIFO_INITIALIZER(obj, buffer, buffer_size) \
+#define DEFINE_FIFO(fifo, size) \
+char __fifo_##buf[((size < 2) || (size & (size - 1))) ? -1 : size]; \
+struct __fifo fifo = \
 { \
     .read_pos = 0, \
     .write_pos = 0, \
-    .buf = buffer, \
-    .buf_size = buffer_size, \
+    .mask = size - 1, \
+    .buf = __fifo_##buf, \
 }
-
-#define STATIC_FIFO_DEFINE(name, size) \
-    static char _buffer_##name[size]; \
-    static fifo_t name = \
-    _FIFO_INITIALIZER(name, _buffer_##name, size)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int fifo_init(fifo_t *fifo_t, char *buf, unsigned int buf_size);
+unsigned int fifo_size(fifo_t *fifo);
+unsigned int fifo_len(fifo_t *fifo);
+unsigned int fifo_avail(fifo_t *fifo);
 
-int fifo_push(fifo_t *fifo, char c);
-
-int fifo_pop(fifo_t *fifo, char *c);
-
-int fifo_peek(fifo_t *fifo, char *c);
+int fifo_is_full(fifo_t *fifo);
+int fifo_is_empty(fifo_t *fifo);
 
 void fifo_reset(fifo_t *fifo);
 
-int fifo_is_full(fifo_t *fifo);
-
-int fifo_is_empty(fifo_t *fifo);
-
-unsigned int fifo_length(fifo_t *fifo);
-
-unsigned int fifo_space_left(fifo_t *fifo);
+int fifo_put(fifo_t *fifo, char ch);
+int fifo_get(fifo_t *fifo, char *ch);
+int fifo_peek(fifo_t *fifo, char *ch);
 
 #ifdef __cplusplus
 }
