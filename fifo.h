@@ -1,24 +1,30 @@
 #ifndef _USER_FIFO_H_
 #define _USER_FIFO_H_
 
-struct __fifo {
+typedef struct {
     unsigned int read_pos;
     unsigned int write_pos;
     unsigned int mask;
     char *buf;
-};
+} fifo_t;
 
-typedef struct __fifo fifo_t;
+#define FIFO_INIT(size, buffer) \
+{                               \
+    .read_pos   = 0,            \
+    .write_pos  = 0,            \
+    .mask       = size - 1,     \
+    .buf        = buffer,  }
+
+#define DEFINE_FIFO_BUFFER(name, size) \
+    char name[((size < 2) || (size & (size - 1))) ? -1 : size]
 
 #define DEFINE_FIFO(fifo, size) \
-char __fifo_##buf[((size < 2) || (size & (size - 1))) ? -1 : size]; \
-struct __fifo fifo = \
-{ \
-    .read_pos = 0, \
-    .write_pos = 0, \
-    .mask = size - 1, \
-    .buf = __fifo_##buf, \
-}
+    DEFINE_FIFO_BUFFER(__fifo_##buf, size); \
+    fifo_t fifo = FIFO_INIT(size, __fifo_##buf)
+
+#define STATIC_DEFINE_FIFO(fifo, size) \
+    static DEFINE_FIFO_BUFFER(__fifo_##buf, size); \
+    static fifo_t fifo = FIFO_INIT(size, __fifo_##buf)
 
 #ifdef __cplusplus
 extern "C" {
